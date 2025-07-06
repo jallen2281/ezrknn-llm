@@ -2,7 +2,7 @@
 
 # Dependencies
 apt update
-apt install -y python3 pip git curl wget nano sudo apt-utils
+apt install -y python3 pip git cmake curl wget nano sudo apt-utils
 
 # Clone only the corresponding branch
 # This way, the Docker tag is the same (if done correctly manually) as the branch inside it
