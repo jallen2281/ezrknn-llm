@@ -23,6 +23,9 @@
 #include <csignal>
 #include <vector>
 
+#include <chrono>
+#include <iomanip>
+
 using namespace std;
 
 LLMHandle llmHandle = nullptr;
@@ -42,10 +45,12 @@ void exit_handler(int signal)
     exit(signal);
 }
 
+// Get perf stats (token/s)
+RKLLMPerfStat last_perf_stat = {0};
 int callback(RKLLMResult *result, void *userdata, LLMCallState state)
 {
-    if (state == RKLLM_RUN_FINISH)
-    {
+    if (state == RKLLM_RUN_FINISH) {
+        last_perf_stat = result->perf; // Store perf stats
         printf("\n");
     } else if (state == RKLLM_RUN_ERROR) {
         printf("\\run error\n");
@@ -119,15 +124,15 @@ int main(int argc, char **argv)
 
     vector<string> pre_input;
     pre_input.push_back("Welcome to ezrkllm! This is an adaptation of Rockchip's rknn-llm repo (see github.com/airockchip/rknn-llm) for running LLMs on its SoCs' NPUs.\n");
-    pre_input.push_back("\nTo exit the model, enter either exit or quit\n");
-    pre_input.push_back("\nMore information here: https://github.com/Pelochus/ezrknpu");
-    pre_input.push_back("\nDetailed information for devs here: https://github.com/Pelochus/ezrknn-llm");
+    pre_input.push_back("To exit the model, enter either exit or quit\n");
+    pre_input.push_back("More information here: https://github.com/Pelochus/ezrknpu\n");
+    pre_input.push_back("Detailed information for devs here: https://github.com/Pelochus/ezrknn-llm\n");
 
     cout << "\n*************************** Pelochus' ezrkllm runtime *************************\n" << endl;
 
     for (int i = 0; i < (int) pre_input.size(); i++)
     {
-        cout << "[" << i << "] " << pre_input[i] << endl;
+        cout << "[" << i << "] " << pre_input[i];
     }
 
     cout << "\n*************************************************************************\n" << endl;
@@ -218,8 +223,19 @@ int main(int argc, char **argv)
         rkllm_input.prompt_input = (char*) input_str.c_str();
         printf("LLM: ");
 
-        // To use standard inference functionality, set rkllm_infer_mode to RKLLM_INFER_GENERATE or leave it unset
-        rkllm_run(llmHandle, &rkllm_input, &rkllm_infer_params, NULL);
+        const auto start_time = chrono::steady_clock::now();
+        rkllm_run(llmHandle, &rkllm_input, &rkllm_infer_params, nullptr);
+        const auto end_time = chrono::steady_clock::now();
+
+        const chrono::duration<double> elapsed = end_time - start_time;
+
+        const uint32_t token_count = last_perf_stat.prefill_tokens + last_perf_stat.generate_tokens;
+        if (token_count > 0 && elapsed.count() > 0.0) {
+            const double tokens_per_sec = token_count / elapsed.count();
+            cout << "\n[Token/s]: " << fixed << setprecision(2) << tokens_per_sec
+                 << "\n[Tokens]: "  << token_count
+                 << "\n[Seconds]: " << elapsed.count() << endl;
+        }
     }
 
     rkllm_destroy(llmHandle);
