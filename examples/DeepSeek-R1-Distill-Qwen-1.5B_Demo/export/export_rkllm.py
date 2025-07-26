@@ -32,7 +32,7 @@ dataset = "./data_quant.json"
 # w4a16/w4a16_gx is recommended to use the grq algorithm.
 qparams = None # Use extra_qparams
 target_platform = "RK3588"
-optimization_level = 1
+optimization_level = 0
 quantized_dtype = "W8A8"
 quantized_algorithm = "normal"
 num_npu_core = 3
