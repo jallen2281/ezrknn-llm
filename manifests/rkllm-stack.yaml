@@ -49,8 +49,8 @@ spec:
                 
                 # Run build scripts
                 bash install.sh || true 
-                cd /app/examples/rkllm_server_demo
-                bash build_rkllm_server_flask.sh
+                #cd /app/examples/rkllm_server_demo
+                #bash build_rkllm_server_flask.sh
                 
                 touch /app/.setup_done
             fi
