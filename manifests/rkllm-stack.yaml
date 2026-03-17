@@ -45,7 +45,7 @@ spec:
             # 3. Automated Setup (One-time)
             if [ ! -f "/app/.setup_done" ]; then
                 export DEBIAN_FRONTEND=noninteractive
-                pip3 install --break-system-packages flask requests
+                pip3 install flask requests
                 
                 # Run build scripts
                 bash install.sh || true 
