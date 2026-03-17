@@ -19,6 +19,7 @@ spec:
       initContainers:
       - name: git-sync
         image: alpine/git
+        imagePullPolicy: IfNotPresent
         workingDir: /app
         command: ["/bin/sh", "-c"]
         args:
@@ -40,6 +41,7 @@ spec:
       containers:
       - name: rkllm
         image: ubuntu:24.04
+        imagePullPolicy: IfNotPresent
         workingDir: /app
         command: ["/bin/bash", "-c"]
         args: 
