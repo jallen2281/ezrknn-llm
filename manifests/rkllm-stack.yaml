@@ -48,7 +48,7 @@ spec:
           - |
             set -e
             # Ubuntu 24.04 package names
-            apt-get update && apt-get install -y python3-pip libgl1 libglx-mesa0 libgomp1 cmake gcc g++
+            apt-get update && apt-get install -y python3-pip libgl1 libglx-mesa0 libgomp1 cmake gcc g++ sudo
             
             # Python 3.12 requires --break-system-packages
             pip3 install --break-system-packages flask requests
