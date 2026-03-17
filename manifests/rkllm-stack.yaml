@@ -111,6 +111,10 @@ metadata:
   name: rkllm-ingress
   namespace: npu-server
   annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    # For Traefik (common in Portainer)
+    traefik.ingress.kubernetes.io/router.timeout: 600s
     kubernetes.io/ingress.class: public 
 spec:
   rules:
