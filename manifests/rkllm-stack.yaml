@@ -16,6 +16,21 @@ spec:
     spec:
       nodeSelector:
         hardware: npu
+      initContainers:
+      - name: git-sync
+        image: alpine/git
+        workingDir: /app
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            if [ ! -d ".git" ]; then
+             git clone https://github.com/jallen2281/ezrknn-llm.git .
+            else
+              git pull
+            fi
+        volumeMounts:
+        - name: code-volume
+          mountPath: /app
       containers:
       - name: rkllm
         image: ubuntu:24.04
@@ -24,47 +39,28 @@ spec:
         args: 
           - |
             set -e
+            # Ubuntu 24.04 package names
+            apt-get update && apt-get install -y python3-pip libgl1 libglx-mesa0 libgomp1 cmake gcc g++
             
-            # 1. Install System Dependencies
-            apt-get update && apt-get install -y \
-                git python3 python3-pip gcc g++ cmake make libgl1 libglx-mesa0 libgomp1 wget
-
-            # 2. Sync Repository to CephFS
-            mkdir -p /app
-            cd /app
-            if [ ! -d ".git" ]; then
-                echo "Cleaning /app and cloning repo..."
-                # Clean hidden files (like lost+found) to allow clone
-                rm -rf ..?* .[!.]* * 
-                git clone https://github.com/jallen2281/ezrknn-llm.git .
-            else
-                echo "Repo exists, pulling updates..."
-                git pull
-            fi
-
-            # 3. Automated Setup (One-time)
-            if [ ! -f "/app/.setup_done" ]; then
-                export DEBIAN_FRONTEND=noninteractive
-                pip3 install flask requests
-                
-                # Run build scripts
-                bash install.sh || true 
-                #cd /app/examples/rkllm_server_demo
-                #bash build_rkllm_server_flask.sh
-                
+            # Python 3.12 requires --break-system-packages
+            pip3 install --break-system-packages flask requests
+            
+            if [ ! -f "/app/examples/rkllm_server_demo/rkllm_server/lib/librkllmrt.so" ]; then
+                cd /app/examples/rkllm_server_demo
+                mkdir -p build && cd build
+                cmake .. -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DTARGET_PLATFORM=rk3588
+                make -j$(nproc)
+                cd /app
                 touch /app/.setup_done
             fi
-
-            # 4. Runtime Configuration
-            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/app/rkllm-runtime/Linux/librkllm_api/aarch64:/usr/lib
             
-            # 5. Start Flask Server with specific model path and target
-            echo "Starting RKLLM Server with Llama-3.2-3B..."
+            # Paths for the RKLLM runtime and your compiled Linux libs
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/app/rkllm-runtime/Linux/librkllm_api/aarch64:/app/examples/rkllm_server_demo/build:/usr/lib
+            
             cd /app/examples/rkllm_server_demo/rkllm_server
             python3 flask_server.py \
               --rkllm_model_path /app/models/Llama-3.2-3B-Instruct_w8a8_g128_rk3588.rkllm \
               --target_platform rk3588
- 
         securityContext:
           privileged: true 
         ports:
