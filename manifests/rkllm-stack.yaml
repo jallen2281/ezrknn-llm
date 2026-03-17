@@ -23,10 +23,16 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            if [ ! -d ".git" ]; then
-             git clone https://github.com/jallen2281/ezrknn-llm.git .
+            # 1. Clone to a temporary location
+            if [ ! -d "/app/.git" ]; then
+                echo "Cloning repo to temporary directory..."
+                git clone https://github.com/jallen2281/ezrknn-llm.git /tmp/repo
+                echo "Moving files to /app (preserving existing models)..."
+                # Move everything except the models folder if it exists
+                cp -r /tmp/repo/. /app/
             else
-              git pull
+                echo "Repo already exists, pulling updates..."
+                cd /app && git pull
             fi
         volumeMounts:
         - name: code-volume
