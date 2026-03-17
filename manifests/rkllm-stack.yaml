@@ -86,6 +86,9 @@ spec:
         hostPath:
           path: /dev/dri/renderD129
           type: CharDevice
+      - name: dma-heap # Add this
+        hostPath:
+          path: /dev/dma_heap
 
 ---
 apiVersion: v1
