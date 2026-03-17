@@ -36,7 +36,7 @@ spec:
                 echo "Cleaning /app and cloning repo..."
                 # Clean hidden files (like lost+found) to allow clone
                 rm -rf ..?* .[!.]* * 
-                git clone https://github.com:jallen2281/ezrknn-llm.git .
+                git clone https://github.com/jallen2281/ezrknn-llm.git .
             else
                 echo "Repo exists, pulling updates..."
                 git pull
